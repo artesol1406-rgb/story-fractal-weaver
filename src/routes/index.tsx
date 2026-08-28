@@ -14,6 +14,15 @@ import {
   type Genre,
   type StoryParams,
 } from "@/lib/story-fractal";
+import {
+  echoBack,
+  polarNode,
+  roleOf,
+  seedForward,
+  simplifiedFlow,
+  transitionsFrom,
+} from "@/lib/narrative-theory";
+import { exportFlowPdf } from "@/lib/pdf-flow";
 
 export const Route = createFileRoute("/")({
   head: () => ({
