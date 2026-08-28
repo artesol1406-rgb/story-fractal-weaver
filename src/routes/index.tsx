@@ -119,7 +119,7 @@ function Page() {
   const [focus, setFocus] = useState<FractalNode | null>(null);
   const [showField, setShowField] = useState(true);
   const [animate, setAnimate] = useState(false);
-  const [tab, setTab] = useState<"nodo" | "flujo" | "leyenda">("nodo");
+  const [tab, setTab] = useState<"nodo" | "mapa" | "flujo" | "leyenda">("nodo");
 
   const story = useMemo(() => buildFractalStory(params), [params]);
   const set = <K extends keyof StoryParams>(k: K, v: StoryParams[K]) => {
