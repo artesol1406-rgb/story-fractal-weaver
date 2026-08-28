@@ -250,7 +250,7 @@ function buildNode(
       ? "activa"
       : "receptiva";
   const persona =
-    PERSONA_NODES[baseIdx * 2 + (polaridad === "activa" ? 0 : 1)];
+    PERSONA_NODES[baseIdx * 2 + (polaridad === "activa" ? 0 : 1)]!;
 
   const curva = Math.sin(((station.idx + 1) / 12) * Math.PI);
   const intensidad = Math.min(
@@ -282,7 +282,7 @@ function buildNode(
         : `${station.nombre} · ${chakra.nombre}`,
     station,
     chakra,
-    arcano: ARCANA[arcanoIdx],
+    arcano: ARCANA[arcanoIdx]!,
     arcanoIdx,
     persona,
     tempo,
