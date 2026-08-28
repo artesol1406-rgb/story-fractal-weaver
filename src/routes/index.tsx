@@ -349,6 +349,13 @@ function Page() {
                   <p className="rounded-sm border border-border bg-background/40 p-3 text-xs leading-relaxed">
                     {beatSentence(selected, params)}
                   </p>
+
+                  <NodeSemantics
+                    story={story}
+                    node={selected}
+                    params={params}
+                    onGo={(n) => setSelected(n)}
+                  />
                 </div>
               ) : (
                 <p className="text-xs text-muted-foreground">
