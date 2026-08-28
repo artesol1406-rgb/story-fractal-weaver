@@ -231,8 +231,8 @@ function buildNode(
   station: Station,
   seedBase: number,
 ): FractalNode {
-  const chakraIdx = path[path.length - 1] % 7;
-  const chakra = CHAKRAS[depth === 0 ? station.idx % 7 : chakraIdx];
+  const chakraIdx = (path[path.length - 1] ?? 0) % 7;
+  const chakra = CHAKRAS[depth === 0 ? station.idx % 7 : chakraIdx]!;
   const key = seedBase ^ hashSeed(path.join(".") + "|" + params.genero);
   const rnd = mulberry32(key);
 
