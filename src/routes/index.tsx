@@ -14,6 +14,15 @@ import {
   type Genre,
   type StoryParams,
 } from "@/lib/story-fractal";
+import {
+  echoBack,
+  polarNode,
+  roleOf,
+  seedForward,
+  simplifiedFlow,
+  transitionsFrom,
+} from "@/lib/narrative-theory";
+import { exportFlowPdf } from "@/lib/pdf-flow";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -110,7 +119,7 @@ function Page() {
   const [focus, setFocus] = useState<FractalNode | null>(null);
   const [showField, setShowField] = useState(true);
   const [animate, setAnimate] = useState(false);
-  const [tab, setTab] = useState<"nodo" | "flujo" | "leyenda">("nodo");
+  const [tab, setTab] = useState<"nodo" | "mapa" | "flujo" | "leyenda">("nodo");
 
   const story = useMemo(() => buildFractalStory(params), [params]);
   const set = <K extends keyof StoryParams>(k: K, v: StoryParams[K]) => {
@@ -227,7 +236,13 @@ function Page() {
               onClick={descargar}
               className="rounded-sm border border-border px-3 py-1.5 text-xs uppercase tracking-widest text-foreground transition hover:border-primary"
             >
-              Exportar flujo
+              Exportar JSON
+            </button>
+            <button
+              onClick={() => exportFlowPdf(story)}
+              className="rounded-sm border border-primary/70 px-3 py-1.5 text-xs uppercase tracking-widest text-primary transition hover:bg-primary/10"
+            >
+              Exportar PDF
             </button>
           </div>
           <div className="flex flex-wrap gap-3 pt-1 text-[11px] text-muted-foreground">
@@ -284,7 +299,7 @@ function Page() {
         {/* Inspector */}
         <section className="panel flex max-h-[80vh] flex-col rounded-md">
           <div className="flex border-b border-border">
-            {(["nodo", "flujo", "leyenda"] as const).map((t) => (
+            {(["nodo", "mapa", "flujo", "leyenda"] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
@@ -334,6 +349,13 @@ function Page() {
                   <p className="rounded-sm border border-border bg-background/40 p-3 text-xs leading-relaxed">
                     {beatSentence(selected, params)}
                   </p>
+
+                  <NodeSemantics
+                    story={story}
+                    node={selected}
+                    params={params}
+                    onGo={(n) => setSelected(n)}
+                  />
                 </div>
               ) : (
                 <p className="text-xs text-muted-foreground">
@@ -341,6 +363,43 @@ function Page() {
                   nodo de personalidad.
                 </p>
               ))}
+
+            {tab === "mapa" && (
+              <div className="space-y-4 text-xs">
+                <p className="text-muted-foreground">
+                  Flujo finito extraído de la matriz infinita: cuatro partes con
+                  su rol dominante. Exportable a PDF.
+                </p>
+                {simplifiedFlow(story, params).map((part) => (
+                  <div key={part.titulo} className="space-y-2">
+                    <h4 className="uppercase tracking-[0.2em] text-primary">
+                      {part.titulo}
+                    </h4>
+                    <p className="italic text-muted-foreground">{part.sintesis}</p>
+                    {part.beats.map((b) => (
+                      <div
+                        key={b.titulo}
+                        className="rounded-sm border border-border/60 p-2"
+                      >
+                        <div className="text-foreground">{b.titulo}</div>
+                        <div className="text-[10px] uppercase tracking-widest text-primary/80">
+                          {b.rol}
+                        </div>
+                        <p className="mt-1 leading-relaxed text-muted-foreground">
+                          {b.linea}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+                <button
+                  onClick={() => exportFlowPdf(story)}
+                  className="w-full rounded-sm bg-primary px-3 py-2 text-[11px] uppercase tracking-widest text-primary-foreground"
+                >
+                  Descargar PDF del flujo
+                </button>
+              </div>
+            )}
 
             {tab === "flujo" && (
               <ol className="space-y-2">
@@ -425,6 +484,97 @@ function Info({ k, v }: { k: string; v: string }) {
         {k}
       </dt>
       <dd className="text-foreground">{v}</dd>
+    </div>
+  );
+}
+
+function NodeSemantics({
+  story,
+  node,
+  params,
+  onGo,
+}: {
+  story: ReturnType<typeof buildFractalStory>;
+  node: FractalNode;
+  params: StoryParams;
+  onGo: (n: FractalNode) => void;
+}) {
+  const rol = roleOf(node, params);
+  const opuesto = polarNode(story, node);
+  const trans = transitionsFrom(story, node, params, 5);
+
+  return (
+    <div className="space-y-3 text-xs">
+      <div className="rounded-sm border border-primary/40 bg-primary/5 p-3">
+        <div className="text-[9px] uppercase tracking-[0.2em] text-primary">
+          Papel en la historia · {rol.tipo}
+        </div>
+        <p className="mt-1 text-foreground">{rol.nombre}</p>
+        <p className="mt-1 leading-relaxed text-muted-foreground">
+          {rol.descripcion}
+        </p>
+        <dl className="mt-2 grid grid-cols-2 gap-2">
+          <Info k="Función" v={rol.arcano.funcion} />
+          <Info k="Valor en juego" v={rol.valorEnJuego} />
+          <Info k="Plano" v={rol.plano.nombre} />
+          <Info k="Carga polar" v={rol.cargaPolar} />
+          <Info k="Arcano opuesto" v={`${rol.opuesto.nombre} — ${rol.opuesto.concepto}`} />
+        </dl>
+      </div>
+
+      {opuesto && (
+        <button
+          onClick={() => onGo(opuesto)}
+          className="w-full rounded-sm border border-border p-2 text-left transition hover:border-primary"
+        >
+          <div className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground">
+            Opuesto polar (otro plano)
+          </div>
+          <div className="text-foreground">
+            {opuesto.station.nombre} · {opuesto.chakra.nombre} — {opuesto.arcano}
+          </div>
+          <div className="text-muted-foreground">
+            {opuesto.persona.etiqueta} · {planeOf(opuesto).nombre.toLowerCase()}
+          </div>
+        </button>
+      )}
+
+      <div>
+        <div className="mb-1 text-[9px] uppercase tracking-[0.2em] text-primary">
+          Transiciones posibles
+        </div>
+        <ul className="space-y-1">
+          {trans.map((t) => (
+            <li key={t.target.id}>
+              <button
+                onClick={() => onGo(t.target)}
+                className="w-full rounded-sm border border-border/60 p-2 text-left transition hover:border-primary"
+              >
+                <span className="text-primary">{t.operador}</span>{" "}
+                <span className="text-muted-foreground">
+                  ({Math.round(t.peso * 100)}%)
+                </span>
+                <p className="mt-1 leading-relaxed text-muted-foreground">
+                  {t.texto}
+                </p>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div className="rounded-sm border border-border/60 p-2">
+        <div className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground">
+          Efecto hacia atrás
+        </div>
+        <p className="mt-1 leading-relaxed">{echoBack(story, node, params)}</p>
+      </div>
+      <div className="rounded-sm border border-border/60 p-2">
+        <div className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground">
+          Siembra hacia adelante
+        </div>
+        <p className="mt-1 leading-relaxed">{seedForward(story, node, params)}</p>
+      </div>
     </div>
   );
 }
