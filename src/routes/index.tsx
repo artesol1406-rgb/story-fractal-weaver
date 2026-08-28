@@ -299,7 +299,7 @@ function Page() {
         {/* Inspector */}
         <section className="panel flex max-h-[80vh] flex-col rounded-md">
           <div className="flex border-b border-border">
-            {(["nodo", "flujo", "leyenda"] as const).map((t) => (
+            {(["nodo", "mapa", "flujo", "leyenda"] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
