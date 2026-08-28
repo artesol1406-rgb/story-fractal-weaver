@@ -487,3 +487,94 @@ function Info({ k, v }: { k: string; v: string }) {
     </div>
   );
 }
+
+function NodeSemantics({
+  story,
+  node,
+  params,
+  onGo,
+}: {
+  story: ReturnType<typeof buildFractalStory>;
+  node: FractalNode;
+  params: StoryParams;
+  onGo: (n: FractalNode) => void;
+}) {
+  const rol = roleOf(node, params);
+  const opuesto = polarNode(story, node);
+  const trans = transitionsFrom(story, node, params, 5);
+
+  return (
+    <div className="space-y-3 text-xs">
+      <div className="rounded-sm border border-primary/40 bg-primary/5 p-3">
+        <div className="text-[9px] uppercase tracking-[0.2em] text-primary">
+          Papel en la historia · {rol.tipo}
+        </div>
+        <p className="mt-1 text-foreground">{rol.nombre}</p>
+        <p className="mt-1 leading-relaxed text-muted-foreground">
+          {rol.descripcion}
+        </p>
+        <dl className="mt-2 grid grid-cols-2 gap-2">
+          <Info k="Función" v={rol.arcano.funcion} />
+          <Info k="Valor en juego" v={rol.valorEnJuego} />
+          <Info k="Plano" v={rol.plano.nombre} />
+          <Info k="Carga polar" v={rol.cargaPolar} />
+          <Info k="Arcano opuesto" v={`${rol.opuesto.nombre} — ${rol.opuesto.concepto}`} />
+        </dl>
+      </div>
+
+      {opuesto && (
+        <button
+          onClick={() => onGo(opuesto)}
+          className="w-full rounded-sm border border-border p-2 text-left transition hover:border-primary"
+        >
+          <div className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground">
+            Opuesto polar (otro plano)
+          </div>
+          <div className="text-foreground">
+            {opuesto.station.nombre} · {opuesto.chakra.nombre} — {opuesto.arcano}
+          </div>
+          <div className="text-muted-foreground">
+            {opuesto.persona.etiqueta} · {planeOf(opuesto).nombre.toLowerCase()}
+          </div>
+        </button>
+      )}
+
+      <div>
+        <div className="mb-1 text-[9px] uppercase tracking-[0.2em] text-primary">
+          Transiciones posibles
+        </div>
+        <ul className="space-y-1">
+          {trans.map((t) => (
+            <li key={t.target.id}>
+              <button
+                onClick={() => onGo(t.target)}
+                className="w-full rounded-sm border border-border/60 p-2 text-left transition hover:border-primary"
+              >
+                <span className="text-primary">{t.operador}</span>{" "}
+                <span className="text-muted-foreground">
+                  ({Math.round(t.peso * 100)}%)
+                </span>
+                <p className="mt-1 leading-relaxed text-muted-foreground">
+                  {t.texto}
+                </p>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div className="rounded-sm border border-border/60 p-2">
+        <div className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground">
+          Efecto hacia atrás
+        </div>
+        <p className="mt-1 leading-relaxed">{echoBack(story, node, params)}</p>
+      </div>
+      <div className="rounded-sm border border-border/60 p-2">
+        <div className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground">
+          Siembra hacia adelante
+        </div>
+        <p className="mt-1 leading-relaxed">{seedForward(story, node, params)}</p>
+      </div>
+    </div>
+  );
+}
