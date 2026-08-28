@@ -236,7 +236,13 @@ function Page() {
               onClick={descargar}
               className="rounded-sm border border-border px-3 py-1.5 text-xs uppercase tracking-widest text-foreground transition hover:border-primary"
             >
-              Exportar flujo
+              Exportar JSON
+            </button>
+            <button
+              onClick={() => exportFlowPdf(story)}
+              className="rounded-sm border border-primary/70 px-3 py-1.5 text-xs uppercase tracking-widest text-primary transition hover:bg-primary/10"
+            >
+              Exportar PDF
             </button>
           </div>
           <div className="flex flex-wrap gap-3 pt-1 text-[11px] text-muted-foreground">
