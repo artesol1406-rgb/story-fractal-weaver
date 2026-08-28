@@ -364,6 +364,43 @@ function Page() {
                 </p>
               ))}
 
+            {tab === "mapa" && (
+              <div className="space-y-4 text-xs">
+                <p className="text-muted-foreground">
+                  Flujo finito extraído de la matriz infinita: cuatro partes con
+                  su rol dominante. Exportable a PDF.
+                </p>
+                {simplifiedFlow(story, params).map((part) => (
+                  <div key={part.titulo} className="space-y-2">
+                    <h4 className="uppercase tracking-[0.2em] text-primary">
+                      {part.titulo}
+                    </h4>
+                    <p className="italic text-muted-foreground">{part.sintesis}</p>
+                    {part.beats.map((b) => (
+                      <div
+                        key={b.titulo}
+                        className="rounded-sm border border-border/60 p-2"
+                      >
+                        <div className="text-foreground">{b.titulo}</div>
+                        <div className="text-[10px] uppercase tracking-widest text-primary/80">
+                          {b.rol}
+                        </div>
+                        <p className="mt-1 leading-relaxed text-muted-foreground">
+                          {b.linea}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+                <button
+                  onClick={() => exportFlowPdf(story)}
+                  className="w-full rounded-sm bg-primary px-3 py-2 text-[11px] uppercase tracking-widest text-primary-foreground"
+                >
+                  Descargar PDF del flujo
+                </button>
+              </div>
+            )}
+
             {tab === "flujo" && (
               <ol className="space-y-2">
                 {story.flujo.slice(0, 400).map((n, i) => (
