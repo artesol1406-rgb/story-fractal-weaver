@@ -23,6 +23,7 @@ import {
   transitionsFrom,
 } from "@/lib/narrative-theory";
 import { exportFlowPdf } from "@/lib/pdf-flow";
+import { AXES, deltaAnalysis, manualDiagnostic, mindBody } from "@/lib/relational-planes";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -119,7 +120,8 @@ function Page() {
   const [focus, setFocus] = useState<FractalNode | null>(null);
   const [showField, setShowField] = useState(true);
   const [animate, setAnimate] = useState(false);
-  const [tab, setTab] = useState<"nodo" | "mapa" | "flujo" | "leyenda">("nodo");
+  const [tab, setTab] = useState<"nodo" | "mapa" | "delta" | "flujo" | "leyenda">("nodo");
+  const [anchor, setAnchor] = useState(0);
 
   const story = useMemo(() => buildFractalStory(params), [params]);
   const set = <K extends keyof StoryParams>(k: K, v: StoryParams[K]) => {
@@ -299,7 +301,7 @@ function Page() {
         {/* Inspector */}
         <section className="panel flex max-h-[80vh] flex-col rounded-md">
           <div className="flex border-b border-border">
-            {(["nodo", "mapa", "flujo", "leyenda"] as const).map((t) => (
+            {(["nodo", "mapa", "delta", "flujo", "leyenda"] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
@@ -401,6 +403,7 @@ function Page() {
               </div>
             )}
 
+            {tab === "delta" && <DeltaPanel story={story} anchor={anchor} setAnchor={setAnchor} />}
             {tab === "flujo" && (
               <ol className="space-y-2">
                 {story.flujo.slice(0, 400).map((n, i) => (
@@ -574,6 +577,66 @@ function NodeSemantics({
           Siembra hacia adelante
         </div>
         <p className="mt-1 leading-relaxed">{seedForward(story, node, params)}</p>
+      </div>
+    </div>
+  );
+}
+
+function DeltaPanel({ story, anchor, setAnchor }: { story: ReturnType<typeof buildFractalStory>; anchor: number; setAnchor: (n: number) => void }) {
+  const d = useMemo(() => deltaAnalysis(story, anchor), [story, anchor]);
+  const diag = useMemo(() => manualDiagnostic(story), [story]);
+  const W = 260, H = 90;
+  const pts = d.rows.map((r, i) => `${(i / 11) * W},${H - r.pulse * H}`).join(" ");
+  const mente = story.flujo.filter((n) => mindBody(n) === "mente").length;
+  return (
+    <div className="space-y-4">
+      <div>
+        <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Ancla de observación</div>
+        <select className="mt-1 w-full rounded border border-border bg-background p-1 text-xs" value={anchor} onChange={(e) => setAnchor(+e.target.value)}>
+          {AXES.map((a, i) => <option key={i} value={i}>{a[0]} ↔ {a[1]}</option>)}
+        </select>
+      </div>
+      <div>
+        <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Pulso dramático T(τ)</div>
+        <svg viewBox={`0 0 ${W} ${H}`} className="mt-1 w-full">
+          <polyline points={pts} fill="none" stroke="var(--primary)" strokeWidth="2" />
+          {d.rows.map((r, i) => r.silencio && <circle key={i} cx={(i / 11) * W} cy={H - r.pulse * H} r="3" fill={r.silencio === "resolución" ? "var(--accent)" : "var(--destructive)"} />)}
+        </svg>
+      </div>
+      <div>
+        <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Psicógrafo Δ (8 ejes)</div>
+        {AXES.map((a, i) => (
+          <div key={i} className="flex items-center gap-2 text-[10px]">
+            <span className="w-20 text-right">{a[0]}</span>
+            <div className="relative h-1.5 flex-1 rounded bg-muted"><div className="absolute top-0 h-1.5 w-1.5 rounded-full bg-primary" style={{ left: `${((d.mean[i]! + 1) / 2) * 100}%` }} /></div>
+            <span className="w-20">{a[1]}</span>
+          </div>
+        ))}
+        <p className="mt-1 text-[10px] text-muted-foreground">Mente {mente} · Cuerpo {story.flujo.length - mente} · Rango de participación {d.participationTotal.toFixed(2)}</p>
+      </div>
+      <div>
+        <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Respiración y resonancia por estación</div>
+        <table className="mt-1 w-full text-[10px]"><tbody>
+          {d.rows.map((r, i) => (
+            <tr key={i} className="border-b border-border/40">
+              <td>{i + 1}. {r.station}</td><td>T {r.pulse.toFixed(2)}</td>
+              <td className={r.dP >= 0 ? "text-primary" : "text-muted-foreground"}>ΔP {r.dP.toFixed(2)}</td>
+              <td>ρ {r.rhoPrev.toFixed(2)}</td><td>{r.silencio ?? ""}</td>
+            </tr>
+          ))}
+        </tbody></table>
+      </div>
+      <div>
+        <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Matriz ρ entre estaciones</div>
+        <div className="mt-1 grid grid-cols-12 gap-px">
+          {d.rhoMatrix.flat().map((v, i) => <div key={i} className="aspect-square bg-primary" style={{ opacity: Math.min(1, v) }} title={v.toFixed(2)} />)}
+        </div>
+      </div>
+      <div>
+        <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Diagnóstico Manual Δ</div>
+        {diag.map((c, i) => (
+          <div key={i} className="mt-1 text-xs"><span className={c.ok ? "text-primary" : "text-destructive"}>{c.ok ? "✓" : "✗"}</span> {c.txt}{!c.ok && <div className="text-[10px] text-muted-foreground">{c.fix}</div>}</div>
+        ))}
       </div>
     </div>
   );
