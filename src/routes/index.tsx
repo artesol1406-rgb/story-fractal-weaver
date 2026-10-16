@@ -16,6 +16,7 @@ import {
 } from "@/lib/story-fractal";
 import {
   echoBack,
+  planeOf,
   polarNode,
   roleOf,
   seedForward,
