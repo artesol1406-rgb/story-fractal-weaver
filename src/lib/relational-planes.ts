@@ -96,7 +96,7 @@ export function deltaAnalysis(story: FractalStory, anchor = 0) {
     const r = i === 0 ? 0 : rho(grams[i - 1]!, grams[i]!);
     const pulse = 0.5 * d + 0.3 * io + 0.2 * fric;
     return {
-      station: g[0]!.station.name,
+      station: g[0]!.station.nombre,
       pulse,
       phiE: Math.max(0, dP),
       phiC: Math.max(0, -dP),
