@@ -129,3 +129,16 @@ export function manualDiagnostic(story: FractalStory) {
     check(Math.abs(mean[7]!) < 0.5, "Fricción mente/cuerpo viva", "Equilibra quién influye y quién actúa."),
   ];
 }
+
+/** Principio: un nodo solo se ve desde su opuesto. Proyecta el nodo sobre el subespacio de su antípoda. */
+export function viewFromOpposite(node: FractalNode, opp: FractalNode) {
+  const u = nodeVector(node), v = nodeVector(opp);
+  const tau = tension(u, v);
+  const dot = u.reduce((s, x, i) => s + x * v[i]!, 0);
+  const nv2 = v.reduce((s, x) => s + x * x, 0) || 1;
+  const proj = v.map((x) => (x * dot) / nv2);
+  const visible = Math.sqrt(proj.reduce((s, x) => s + x * x, 0)) / (Math.hypot(...u) || 1);
+  const diffs = u.map((x, i) => ({ i, d: x - v[i]! })).sort((a, b) => Math.abs(b.d) - Math.abs(a.d));
+  const ejes = diffs.slice(0, 3).map(({ i, d }) => (d > 0 ? AXES[i]![0] : AXES[i]![1]));
+  return { tau, visible, oculto: 1 - visible, ejes };
+}
