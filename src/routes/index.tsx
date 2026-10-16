@@ -24,7 +24,7 @@ import {
   transitionsFrom,
 } from "@/lib/narrative-theory";
 import { exportFlowPdf } from "@/lib/pdf-flow";
-import { AXES, deltaAnalysis, manualDiagnostic, mindBody } from "@/lib/relational-planes";
+import { AXES, deltaAnalysis, manualDiagnostic, mindBody, viewFromOpposite } from "@/lib/relational-planes";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -507,8 +507,23 @@ function NodeSemantics({
   const opuesto = polarNode(story, node);
   const trans = transitionsFrom(story, node, params, 5);
 
+  const vista = opuesto ? viewFromOpposite(node, opuesto) : null;
   return (
     <div className="space-y-3 text-xs">
+      {opuesto && vista && (
+        <div className="rounded-sm border border-accent/50 bg-accent/5 p-3">
+          <div className="text-[9px] uppercase tracking-[0.2em] text-accent">Visto desde su opuesto</div>
+          <p className="mt-1 leading-relaxed text-foreground">
+            Desde {opuesto.station.nombre} · {opuesto.chakra.nombre} ({opuesto.arcano}), este nodo se revela como{" "}
+            {vista.ejes.join(", ").toLowerCase()}. Lo que el opuesto no tiene es lo que hace visible a este.
+          </p>
+          <dl className="mt-2 grid grid-cols-3 gap-2">
+            <Info k="Tensión τ" v={vista.tau.toFixed(2)} />
+            <Info k="Visible" v={`${Math.round(vista.visible * 100)}%`} />
+            <Info k="Oculto" v={`${Math.round(vista.oculto * 100)}%`} />
+          </dl>
+        </div>
+      )}
       <div className="rounded-sm border border-primary/40 bg-primary/5 p-3">
         <div className="text-[9px] uppercase tracking-[0.2em] text-primary">
           Papel en la historia · {rol.tipo}
